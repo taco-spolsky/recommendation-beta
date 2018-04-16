@@ -85,7 +85,7 @@
 
       // NOTE: Apparently codes less than 32 aren't
       // printable or something like that
-      if(!(charCode > 32)) {
+      if(!(charCode >= 32)) {
         throw new Error("Invalid charCode");
       } else {
         return String.fromCharCode(charCode);
