@@ -102,7 +102,8 @@
         search: country.toLowerCase()
       }
     }
-    // e.g. For USA, the letter at index 2 is 'A'
+    // Get back the original, unnormalized string.  Haven't
+    // needed to use this yet, but added it just in case.
     Locator.prototype.getOriginal = function() {
       return this.location.original;
     }
