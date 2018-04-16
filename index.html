@@ -5,6 +5,11 @@
   <script>
     function validateName() {
       var name = readFromUrl('name', 'Taco Spolsky').substr(0, 32);
+      // I suppose it's okay to have a name that's less than 7
+      // characters
+      while(name.length < 7) {
+        name += " "
+      }
 
       name.split('').forEach(function(letter, index){
         var div = document.createElement('div');
@@ -110,7 +115,8 @@
     }
     // e.g. For USA, the letter at index 2 is 'a'
     Locator.prototype.readNormalizedLetterAt = function(index) {
-      return this.location.search[index];
+      // Make sure to handle any escaped letters!
+      return decodeURIComponent(this.location.search)[index];
     }
 
     function sanitizeNumber(numberString) {
@@ -172,7 +178,7 @@
         {
           test: new Locator(country).readNormalizedLetterAt,
           // Choose a random letter from their country name
-          input: Math.floor(Math.random() * Math.max(0, country.length, 10)),
+          input: Math.ceil(Math.random() * Math.max(country.length, 10)),
           namePart: name[1]
         },
         { test: letterFromHomepage, input: homepage, namePart: name[2] },
