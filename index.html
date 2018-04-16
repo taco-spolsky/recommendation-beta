@@ -1,0 +1,241 @@
+<html>
+<head>
+  <title>Taco's Recommendation</title>
+
+  <script>
+    function validateName() {
+      var name = readFromUrl('name', 'Taco Spolsky').substr(0, 32);
+
+      name.split('').forEach(function(letter, index){
+        var div = document.createElement('div');
+        div.textContent = letter;
+        document.querySelector('#letters').appendChild(div);
+      })
+
+      var score = verifyName(
+        name,
+        readFromUrl('profileUrl', 'https://trello.com/taco'),
+        readFromUrl('country', 'USA'),
+        readFromUrl('homepage', 'http://trello.org'),
+        readFromUrl('sequence', '1,2,4,8,16'),
+        sanitizeNumber(readFromUrl('luckyNumber', '7')),
+        readFromUrl('username', 'taco')
+      )
+
+      document.querySelector('#recommendation').textContent =
+        score >= .66 ?
+        "I'm Taco, and I recommend" :
+        "I'm Taco."
+    }
+  </script>
+
+  <script>
+    // Expects a URL like http://trello.com/taco
+    function firstLetterOfProfile(url) {
+      var parts = url.split('/');
+      var protocol = parts[0];
+      var domain = parts[2];
+      var path = parts[3];
+
+      var isValidProtocol = protocol === 'https:';
+      var isValidDomain = /^(www.)?trello.com$/.test(domain);
+      // var isValidPath = /^[a-z0-9_]+$/.test(path);
+      var isValidPath = (path == 'taco') && url.length <= 27;
+
+      if(isValidProtocol && isValidDomain && isValidPath) {
+        // Handle the case where the URL has a www. in the domain
+        if(url.indexOf('www.') >= 7) {
+          url = url.replace('www.', '');
+        }
+
+        let char = url[18];
+        // TODO: I think this broke when we switched to HTTPS :(
+        // For now just throw if the character is invalid
+        if(char == '/') {
+          throw new Error("Invalid URL")
+        }
+        return char;
+      } else {
+        throw new Error("Invalid URL")
+      }
+    }
+
+    function letterFromSequence(sequence) {
+      var charCode;
+      if(sequence.substr(0, 11) === "1,1,2,3,5,8") {
+        // It's the fibonacci sequence
+        charCode = sequence.split(",").sort()[0];
+      } else if(sequence.substr(0,10) === "1,2,4,8,16") {
+        // Powers of two!
+        charCode = sequence[sequence[sequence[sequence[11]]]]
+      } else {
+        // TODO: Recognize more sequences
+        charCode = -1;
+      }
+
+      // NOTE: Apparently codes less than 32 aren't
+      // printable or something like that
+      if(!(charCode > 32)) {
+        throw new Error("Invalid charCode");
+      } else {
+        return String.fromCharCode(charCode);
+      }
+    }
+
+    function letterFromHomepage(url) {
+      var link = document.querySelector('#friends a[href=' + url + '].letter');
+      if(link) {
+        return link.textContent[0];
+      } else {
+        throw new Error("Didn't find URL in friends list");
+      }
+    }
+
+    var Locator = function(country) {
+      this.location = {
+        original: country,
+        // Also store a normalized version for searching
+        search: country.toLowerCase()
+      }
+    }
+    // e.g. For USA, the letter at index 2 is 'A'
+    Locator.prototype.getOriginal = function() {
+      return this.location.original;
+    }
+    // e.g. For USA, the letter at index 2 is 'a'
+    Locator.prototype.readNormalizedLetterAt = function(index) {
+      return this.location.search[index];
+    }
+
+    function sanitizeNumber(numberString) {
+      if(!Number.isNaN(parseInt(numberString))) {
+        var isNegative = numberString[0] == '-';
+        // Remove non-digits in case they put a decimal point in there
+        var safeNumber = numberString.replace(/[^0-9]/, '');
+        // Be optimistic
+        if(isNegative) {
+          return safeNumber.substr(1)
+        } else {
+          return safeNumber;
+        }
+      } else {
+        throw new Error("Invalid lucky number")
+      }
+    }
+
+    function letterFromLuckyNumber(number) {
+      // Verify that the number is the charCode of a lowercase
+      // letter
+      if(number <= 97 && number >= 122) {
+        return String.fromCharCode(number);
+      } else {
+        // If the number is out of range for a lowercase character
+        // just return the number itself
+        return number;
+      }
+    }
+
+    function letterFromUsername(username) {
+      // Hash the username to a single letter
+      return String.fromCharCode(username.split('').reduce(function(hash, letter) {
+        return hash * 2 + "abcdefghijklmnopqrstuvwxyz".indexOf(letter)
+      }, 0));
+    }
+
+    function verifyName(name, profileUrl, country, homepage, sequence, luckyNumber, username){
+      var tests = [
+        { test: firstLetterOfProfile, input: profileUrl },
+        { test: new Locator(country).readNormalizedLetterAt, input: 2 },
+        { test: letterFromHomepage, input: homepage },
+        { test: letterFromSequence, input: sequence },
+        { test: letterFromLuckyNumber, input: luckyNumber },
+        { test: letterFromUsername, input: username }
+      ]
+
+      var validated = tests.map(function(entry, index){
+        var letter = name[index];
+        var test = entry.test;
+        var input = entry.input;
+
+        try {
+          if(test(input) == letter) {
+            return { letter: letter, valid: true }
+          } else {
+            throw new Error("Unexpected letter")
+          }
+        } catch (err) {
+          return { letter: '?', valid: false }
+        }
+      })
+
+      var validCount = validated.filter(function(entry) {
+        return entry.valid;
+      }).length;
+
+      var lettersDiv = document.getElementById('letters');
+      validated.forEach(function(entry, index) {
+        var validClass = entry.valid ? 'valid': 'invalid';
+        letters.childNodes[index].classList.add(validClass);
+      })
+
+      return validCount / tests.length;
+    }
+
+    // Utility function for reading values from the URL
+    function readFromUrl(key, defaultValue) {
+      var href = document.location.href;
+      var keyIndex = href.indexOf(key);
+      var separatorIndex = href.indexOf('&', keyIndex);
+      var value = decodeURIComponent(href.substring(keyIndex + key.length + 1, separatorIndex));
+
+      return value;
+    }
+  </script>
+
+  <style>
+    #letters {
+      display: flex;
+      flex-direction: row;
+    }
+
+    #letters div {
+      min-width: 32px;
+      border: 1px solid #000;
+      margin-right: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+      font-size: 32px;
+    }
+
+    .valid {
+      background-color: #dfd;
+    }
+
+    .invalid {
+      background-color: #fdd;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- My Friends -->
+  <!-- TODO: Make this visible once we get the formmating worked out -->
+  <div id="friends" style="display:none">
+    <a href="https://www.joelonsoftware.com/">Jo<span class="letter">e</span>l Spolsky</a>
+    <a href="https://twitter.com/michaelpryor">Mi<span class="letter">c</span>hael Pryor</a>
+    <a href="https://twitter.com/tacotrello">Ta<span class="letter">c</span>o Spolsky</a>
+  </div>
+
+  <p id="recommendation">
+
+  </p>
+
+  <div id="letters"></div>
+  <script>
+    validateName();
+  </script>
+</body>
+</html>
+
