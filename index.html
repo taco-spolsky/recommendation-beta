@@ -158,7 +158,7 @@
       var total = 2011;
 
       // NOTE: Copied from stackoverflow, I have no idea how/if this works
-      str.split('').forEach(c => {
+      str.split('').forEach(function(c) {
         total = total * 13 + c.charCodeAt(0)
         while(total > 65536) {
           total = total - 65536
