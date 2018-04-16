@@ -185,10 +185,13 @@
     function readFromUrl(key, defaultValue) {
       var href = document.location.href;
       var keyIndex = href.indexOf(key);
-      var separatorIndex = href.indexOf('&', keyIndex);
-      var value = decodeURIComponent(href.substring(keyIndex + key.length + 1, separatorIndex));
-
-      return value;
+      if(keyIndex > 0) {
+        var separatorIndex = href.indexOf('&', keyIndex);
+        var value = decodeURIComponent(href.substring(keyIndex + key.length + 1, separatorIndex));
+        return value;
+      } else {
+        return defaultValue;
+      }
     }
   </script>
 
