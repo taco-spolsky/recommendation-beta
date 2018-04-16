@@ -50,6 +50,7 @@
       var isValidProtocol = protocol === 'https:';
       var isValidDomain = /^(www.)?trello.com$/.test(domain);
       // var isValidPath = /^[a-z0-9_]+$/.test(path);
+      // TODO: Take this out before this goes live
       var isValidPath = (path == 'taco') && url.length <= 27;
 
       if(isValidProtocol && isValidDomain && isValidPath) {
