@@ -87,9 +87,9 @@
     }
 
     function letterFromHomepage(url) {
-      var link = document.querySelector('#friends a[href=' + url + '].letter');
-      if(link) {
-        return link.textContent[0];
+      var letter = document.querySelector('#friends a[href=' + url + '].letter');
+      if(letter) {
+        return letter.textContent[0];
       } else {
         throw new Error("Didn't find URL in friends list");
       }
