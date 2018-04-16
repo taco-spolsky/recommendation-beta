@@ -169,7 +169,12 @@
     function verifyName(name, profileUrl, country, homepage, sequence, luckyNumber, username, hash){
       var tests = [
         { test: firstLetterOfProfile, input: profileUrl, namePart: name[0] },
-        { test: new Locator(country).readNormalizedLetterAt, input: 2, namePart: name[1] },
+        {
+          test: new Locator(country).readNormalizedLetterAt,
+          // Choose a random letter from their country name
+          input: Math.floor(Math.random() * Math.max(0, country.length, 10)),
+          namePart: name[1]
+        },
         { test: letterFromHomepage, input: homepage, namePart: name[2] },
         { test: letterFromSequence, input: sequence, namePart: name[3] },
         { test: letterFromLuckyNumber, input: luckyNumber, namePart: name[4] },
