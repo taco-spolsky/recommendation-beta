@@ -19,11 +19,12 @@
         readFromUrl('homepage', 'http://trello.org'),
         readFromUrl('sequence', '1,2,4,8,16'),
         sanitizeNumber(readFromUrl('luckyNumber', '7')),
-        readFromUrl('username', 'taco')
+        readFromUrl('username', 'taco'),
+        readFromUrl('hash', '7a2b6f42')
       )
 
       document.querySelector('#recommendation').textContent =
-        score >= .66 ?
+        score >= .5 ?
         "I'm Taco, and I recommend" :
         "I'm Taco."
 
@@ -147,29 +148,48 @@
       }, 0));
     }
 
-    function verifyName(name, profileUrl, country, homepage, sequence, luckyNumber, username){
+    function verifyHash(hash, str) {
+      var total = 2011;
+
+      // NOTE: Copied from stackoverflow, I have no idea how/if this works
+      str.split('').forEach(c => {
+        total = total * 13 + c.charCodeAt(0)
+        while(total > 65536) {
+          total = total - 65536
+        }
+      })
+
+      if(total.toString(16) == hash) {
+        return str;
+      } else {
+        throw new Error("Invalid hash")
+      }
+    }
+
+    function verifyName(name, profileUrl, country, homepage, sequence, luckyNumber, username, hash){
       var tests = [
-        { test: firstLetterOfProfile, input: profileUrl },
-        { test: new Locator(country).readNormalizedLetterAt, input: 2 },
-        { test: letterFromHomepage, input: homepage },
-        { test: letterFromSequence, input: sequence },
-        { test: letterFromLuckyNumber, input: luckyNumber },
-        { test: letterFromUsername, input: username }
+        { test: firstLetterOfProfile, input: profileUrl, namePart: name[0] },
+        { test: new Locator(country).readNormalizedLetterAt, input: 2, namePart: name[1] },
+        { test: letterFromHomepage, input: homepage, namePart: name[2] },
+        { test: letterFromSequence, input: sequence, namePart: name[3] },
+        { test: letterFromLuckyNumber, input: luckyNumber, namePart: name[4] },
+        { test: letterFromUsername, input: username, namePart: name[5] },
+        { test: verifyHash, input: hash, namePart: name.substr(6) }
       ]
 
       var validated = tests.map(function(entry, index){
-        var letter = name[index];
+        var namePart = entry.namePart;
         var test = entry.test;
         var input = entry.input;
 
         try {
-          if(test(input) == letter) {
-            return { letter: letter, valid: true }
+          if(test(input, namePart) == namePart) {
+            return { namePart: namePart, valid: true }
           } else {
             throw new Error("Unexpected letter")
           }
         } catch (err) {
-          return { letter: '?', valid: false }
+          return { valid: false }
         }
       })
 
