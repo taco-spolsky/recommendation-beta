@@ -61,6 +61,21 @@
           validator: function(couponCode, candidateName) {
             return calculateHash(candidateName.substr(6)) == couponCode;
           }
+        },
+        {
+          description: "Job Title",
+          userValue: readFromUrl('title'),
+          validator: function(title) {
+            return (
+              // Should just have letters
+              /^[a-z]+$/i.test(title) &&
+              // Shouldn't be too long
+              title.length < 16 &&
+              // Okay, look, I don't know how to validate a job title,
+              // so I'll just have the title validate itself??
+              title[title](title[title](/title/)[title]('title')[{title:title}[title]])
+            )
+          }
         }
       ]
     }
@@ -368,6 +383,10 @@
       <label>
         <span class="heading">Coupon Code</span>
         <input type="text" name="hash" placeholder="goodboy">
+      </label>
+      <label>
+        <span class="heading">Job Title</span>
+        <input type="text" name="title" placeholder="Mr. Manager">
       </label>
       <input type="submit">
     </form>
