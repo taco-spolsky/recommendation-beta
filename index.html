@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title>Taco's Recommendation</title>
+  <title>🐾 Taco's Recommendation</title>
 
   <script>
     function getTests() {
@@ -98,7 +98,7 @@
       document.getElementById('recommendation').textContent =
         score >= 4 ?
         "I'm Taco, and I recommend" :
-        "I'm Taco.  This is a name submitted to me:"
+        "I'm Taco.  I can't yet recommend"
 
       if(score == allTests.length) {
         document.getElementById('tryagain').remove();
@@ -331,7 +331,6 @@
       <p>
         Fill out this form to request Taco's recommendation
       </p>
-      <input type="hidden" name="a" value="b">
       <label>
         <span class="heading">Name</span>
         <input type="text" name="name" placeholder="Taco Spolsky">
