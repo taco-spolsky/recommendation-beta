@@ -3,39 +3,116 @@
   <title>Taco's Recommendation</title>
 
   <script>
-    function validateName() {
-      var name = readFromUrl('name', 'Taco Spolsky').substr(0, 32);
-      // I suppose it's okay to have a name that's less than 7
-      // characters
-      while(name.length < 7) {
-        name += " "
+    function getTests() {
+      return [
+        {
+          description: "Profile URL",
+          userValue: readFromUrl('profileUrl'),
+          validator: function(profileUrl, candidateName) {
+            return firstLetterOfProfile(profileUrl) == candidateName[0];
+          }
+        },
+        {
+          description: "Country",
+          userValue: readFromUrl('country'),
+          validator: function(country, candidateName) {
+            var check =
+              country ?
+              new Locator(country).readNormalizedLetterAt :
+              function(index) { return false }
+
+            // Choose a random letter from their country name
+            var index = Math.ceil(Math.random() * Math.max(country.length, 10));
+
+            return check(index) == candidateName[1];
+          }
+        },
+        {
+          description: "Homepage",
+          userValue: readFromUrl('homepage'),
+          validator: function(homepage, candidateName) {
+            return letterFromHomepage(homepage) == candidateName[2];
+          }
+        },
+        {
+          description: "Favorite Number Sequence",
+          userValue: readFromUrl('sequence'),
+          validator: function(sequence, candidateName) {
+            return letterFromSequence(sequence) == candidateName[3];
+          }
+        },
+        {
+          description: "Lucky Number",
+          userValue: sanitizeNumber(readFromUrl('luckyNumber')),
+          validator: function(luckyNumber, candidateName) {
+            return letterFromLuckyNumber(luckyNumber) == candidateName[4];
+          }
+        },
+        {
+          description: "Username",
+          userValue: readFromUrl('username'),
+          validator: function(username, candidateName) {
+            return letterFromUsername(username) == candidateName[5];
+          }
+        },
+        {
+          description: "Coupon Code",
+          userValue: readFromUrl('hash'),
+          validator: function(couponCode, candidateName) {
+            return calculateHash(candidateName.substr(6)) == couponCode;
+          }
+        }
+      ]
+    }
+
+    function runValidation() {
+      var candidateName = readFromUrl('name');
+      var allTests = getTests();
+
+      while(candidateName.length < allTests.length) {
+        candidateName += ' '
       }
 
-      name.split('').forEach(function(letter, index){
-        var div = document.createElement('div');
-        div.textContent = letter;
-        document.querySelector('#letters').appendChild(div);
+      var letterNodes = outputName(candidateName);
+
+      var score = 0;
+
+      allTests.forEach(function(test, index) {
+        var passed;
+        try {
+          passed = test.validator(test.userValue, candidateName)
+        } catch(err) {
+          passed = false;
+        }
+
+        if(passed) {
+          score = score + 1;
+        }
+        letterNodes[index].classList.add(passed ? 'valid' : 'invalid')
+
+        var status = document.createElement('div');
+        status.textContent = [passed ? '✅' : '❌', test.description].join('');
+        document.getElementById('output').appendChild(status);
       })
 
-      var score = verifyName(
-        name,
-        readFromUrl('profileUrl', 'https://trello.com/taco'),
-        readFromUrl('country', 'USA'),
-        readFromUrl('homepage', 'http://trello.org'),
-        readFromUrl('sequence', '1,2,4,8,16'),
-        sanitizeNumber(readFromUrl('luckyNumber', '7')),
-        readFromUrl('username', 'taco'),
-        readFromUrl('hash', '7a2b6f42')
-      )
-
-      document.querySelector('#recommendation').textContent =
-        score >= .5 ?
+      document.getElementById('recommendation').textContent =
+        score >= 4 ?
         "I'm Taco, and I recommend" :
-        "I'm Taco."
+        "I'm Taco.  This is a name submitted to me:"
 
-      if(score == 1) {
-        document.getElementById('note').remove();
+      if(score == allTests.length) {
+        document.getElementById('tryagain').remove();
       }
+
+    }
+
+    function outputName(name) {
+      return name.split('').map(function(letter) {
+        var div = document.createElement('div');
+        div.textContent = letter;
+        document.getElementById('letters').appendChild(div);
+        return div;
+      })
     }
   </script>
 
@@ -141,10 +218,12 @@
       // letter
       if(number <= 97 && number >= 122) {
         return String.fromCharCode(number);
-      } else {
+      } else if(number) {
         // If the number is out of range for a lowercase character
         // just return the number itself
         return number;
+      } else {
+        throw new Error("Not lucky enough");
       }
     }
 
@@ -155,7 +234,7 @@
       }, 0));
     }
 
-    function verifyHash(hash, str) {
+    function calculateHash(str) {
       var total = 2011;
 
       // NOTE: Copied from stackoverflow, I have no idea how/if this works
@@ -166,56 +245,7 @@
         }
       })
 
-      if(total.toString(16) == hash) {
-        return str;
-      } else {
-        throw new Error("Invalid hash")
-      }
-    }
-
-    function verifyName(name, profileUrl, country, homepage, sequence, luckyNumber, username, hash){
-      var tests = [
-        { test: firstLetterOfProfile, input: profileUrl, namePart: name[0] },
-        {
-          test: new Locator(country).readNormalizedLetterAt,
-          // Choose a random letter from their country name
-          input: Math.ceil(Math.random() * Math.max(country.length, 10)),
-          namePart: name[1]
-        },
-        { test: letterFromHomepage, input: homepage, namePart: name[2] },
-        { test: letterFromSequence, input: sequence, namePart: name[3] },
-        { test: letterFromLuckyNumber, input: luckyNumber, namePart: name[4] },
-        { test: letterFromUsername, input: username, namePart: name[5] },
-        { test: verifyHash, input: hash, namePart: name.substr(6) }
-      ]
-
-      var validated = tests.map(function(entry, index){
-        var namePart = entry.namePart;
-        var test = entry.test;
-        var input = entry.input;
-
-        try {
-          if(test(input, namePart) == namePart) {
-            return { namePart: namePart, valid: true }
-          } else {
-            throw new Error("Unexpected letter")
-          }
-        } catch (err) {
-          return { valid: false }
-        }
-      })
-
-      var validCount = validated.filter(function(entry) {
-        return entry.valid;
-      }).length;
-
-      var lettersDiv = document.getElementById('letters');
-      validated.forEach(function(entry, index) {
-        var validClass = entry.valid ? 'valid': 'invalid';
-        letters.childNodes[index].classList.add(validClass);
-      })
-
-      return validCount / tests.length;
+      return total.toString(16);
     }
 
     // Utility function for reading values from the URL
@@ -233,19 +263,24 @@
   </script>
 
   <style>
+    body {
+      font-family: sans-serif;
+    }
+
     #letters {
       display: flex;
       flex-direction: row;
+      margin-bottom: 16px;
     }
 
     #letters div {
       min-width: 32px;
+      min-height: 32px;
       border: 1px solid #000;
       margin-right: 2px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: sans-serif;
       font-size: 32px;
     }
 
@@ -261,6 +296,24 @@
       color: #ddd;
       margin-top: 8em;
     }
+
+    label {
+      display: block;
+      margin-bottom: 1em;
+    }
+
+    .heading {
+      display: block;
+    }
+
+    input, select {
+      width: 200px;
+    }
+
+    #tryagain {
+      margin-top: 16px;
+      display: inline-block;
+    }
   </style>
 </head>
 
@@ -273,18 +326,77 @@
     <a href="https://twitter.com/tacotrello">Ta<span class="letter">c</span>o Spolsky</a>
   </div>
 
-  <p id="recommendation">
+  <div id="form">
+    <form method="GET">
+      <p>
+        Fill out this form to request Taco's recommendation
+      </p>
+      <input type="hidden" name="a" value="b">
+      <label>
+        <span class="heading">Name</span>
+        <input type="text" name="name" placeholder="Taco Spolsky">
+      </label>
+      <label>
+        <span class="heading">Profile URL</span>
+        <input type="text" name="profileUrl" placeholder="https://trello.com/taco">
+      </label>
+      <label>
+        <span class="heading">Country</span>
+        <select name="country">
+          <option>Equatorial Kundu</option>
+          <option>Freedonia</option>
+          <option>Genovia</option>
+          <option>Krakozhia</option>
+          <option selected>Other</option>
+        </select>
+      </label>
+      <label>
+        <span class="heading">Homepage</span>
+        <input type="text" name="homepage" placeholder="http://trello.dog">
+      </label>
+      <label>
+        <span class="heading">Favorite Number Sequence</span>
+        <input type="text" name="sequence" placeholder="1,2,3,4,5">
+      </label>
+      <label>
+        <span class="heading">Lucky Number</span>
+        <input type="text" name="luckyNumber" placeholder="42">
+      </label>
+      <label>
+        <span class="heading">Username</span>
+        <input type="text" name="username" placeholder="taco">
+      </label>
+      <label>
+        <span class="heading">Coupon Code</span>
+        <input type="text" name="hash" placeholder="goodboy">
+      </label>
+      <input type="submit">
+    </form>
 
-  </p>
+    <p id="note">
+      Psst … the objective is to find a URL like <code>https://taco-spolsky.github.io/recommendation-beta/…</code> that recommends <em>you</em>.  The fun part is figuring out what goes in the <code>…</code>.
+    </p>
+  </div>
 
-  <div id="letters"></div>
+  <div id="results">
+    <p id="recommendation">
 
-  <p id="note">
-    Psst … the objective is to find a URL like <code>https://taco-spolsky.github.io/recommendation-beta/…</code> that recommends <em>you</em>.  The fun part is figuring out what goes in the <code>…</code>.
-  </p>
+    </p>
+
+    <div id="letters"></div>
+
+    <div id="output"></div>
+
+    <a id="tryagain" href="./">Try again</a>
+  </div>
 
   <script>
-    validateName();
+    if(location.href.indexOf('?') > 0) {
+      document.getElementById('form').remove();
+      runValidation();
+    } else {
+      document.getElementById('results').remove();
+    }
   </script>
 </body>
 </html>
