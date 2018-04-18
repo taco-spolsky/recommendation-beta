@@ -1,3 +1,38 @@
+<!--
+Hello, and welcome to Taco's Recommendation Challenge!
+
+This is something we at Trello encourage people applying to a
+Front-End Developer job (see https://trello.com/jobs) to attempt.
+
+Your objective is to cause at least 4 of the tests returned
+by getTests() to pass … if you do that, you'll earn Taco's
+Recommendation!
+
+FAQ
+
+Q: Is it possible to make all 8 tests pass?
+
+A: Yes.
+
+
+Q: Are the tests ordered by difficulty?
+
+A: No.
+
+
+Q: Can I blog/share/discuss my solution or questions about how to
+   get Taco's Recommendation?
+
+A: Yes, but do your best not to spoil the fun for anyone else.
+   Before discussing solutions, give people a chance to try the
+   puzzle out for themselves.  If you want to show people that
+   you solved the puzzle, use the "Obfuscated link to this solution".
+
+
+Q: Do you have any more puzzles like this?
+
+A: Here's an older challenge we used: https://taco-spolsky.github.io/
+-->
 <html>
 <head>
   <title>🐾 Taco's Recommendation</title>
@@ -269,6 +304,9 @@
       var keyIndex = href.indexOf(key);
       if(keyIndex > 0) {
         var separatorIndex = href.indexOf('&', keyIndex);
+        if(separatorIndex == -1) {
+          separatorIndex = href.length;
+        }
         var value = decodeURIComponent(href.substring(keyIndex + key.length + 1, separatorIndex));
         return value;
       } else {
@@ -425,13 +463,15 @@
 
     <div id="output"></div>
 
-    <a id="tryagain" href="./">Try again</a>
+    <p><a id="tryagain" href="./">Try again</a></p>
+    <p><a id="obfuscated" href="" target="_blank">Shareable, obfuscated link to this solution</a></p>
   </div>
 
   <script>
     if(location.href.indexOf('?') > 0) {
       document.getElementById('form').remove();
       runValidation();
+      document.getElementById('obfuscated').href = 'https://tacos-challenge-solution.glitch.me/?' + btoa(location.href);
     } else {
       document.getElementById('results').remove();
     }
